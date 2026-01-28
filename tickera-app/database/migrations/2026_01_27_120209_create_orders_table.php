@@ -10,22 +10,19 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('orders', function (Blueprint $table) {
-        $table->id();
-        // Данные покупателя (делаем простую версию без обязательной регистрации)
-        $table->string('customer_email');
-        $table->string('customer_name')->nullable();
-        
-        // Финансы
-        $table->decimal('total_amount', 10, 2); // Итоговая сумма заказа
-        $table->string('status')->default('pending'); // pending (ждет оплаты), paid (оплачен), canceled
-        
-        // Технические метки
-        $table->string('payment_id')->nullable(); // ID транзакции от платежной системы
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('orders', function (Blueprint $table) {
+            $table->id();
+            // Вот эти две строки критически важны:
+            $table->string('customer_email');
+            $table->string('customer_name')->nullable();
+
+            $table->decimal('total_amount', 10, 2);
+            $table->string('status')->default('pending');
+            $table->string('payment_id')->nullable();
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

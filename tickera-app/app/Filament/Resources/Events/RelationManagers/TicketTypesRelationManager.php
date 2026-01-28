@@ -2,8 +2,15 @@
 
 namespace App\Filament\Resources\Events\RelationManagers;
 
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class TicketTypesRelationManager extends RelationManager
@@ -16,19 +23,18 @@ class TicketTypesRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                // Используем полные пути для полей формы
-                \Filament\Forms\Components\TextInput::make('name')
+                TextInput::make('name')
                     ->label('Название (VIP, Входной...)')
                     ->required()
                     ->maxLength(255),
 
-                \Filament\Forms\Components\TextInput::make('price')
+                TextInput::make('price')
                     ->label('Цена')
                     ->numeric()
                     ->prefix('₴')
                     ->required(),
 
-                \Filament\Forms\Components\TextInput::make('quantity')
+                TextInput::make('quantity')
                     ->label('Количество мест')
                     ->numeric()
                     ->required(),
@@ -40,28 +46,30 @@ class TicketTypesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('name')
             ->columns([
-                // Используем полные пути для колонок таблицы
-                \Filament\Tables\Columns\TextColumn::make('name')
-                    ->label('Название'),
+                TextColumn::make('name')
+                    ->label('Название')
+                    ->searchable(),
 
-                \Filament\Tables\Columns\TextColumn::make('price')
+                TextColumn::make('price')
                     ->label('Цена')
                     ->money('UAH'),
 
-                \Filament\Tables\Columns\TextColumn::make('quantity')
+                TextColumn::make('quantity')
                     ->label('Осталось мест'),
             ])
+            ->filters([
+                //
+            ])
             ->headerActions([
-                // 👇 Вот здесь была ошибка. Теперь используем полный путь:
-                \Filament\Tables\Actions\CreateAction::make(),
+                CreateAction::make(),
             ])
-            ->actions([
-                \Filament\Tables\Actions\EditAction::make(),
-                \Filament\Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                \Filament\Tables\Actions\BulkActionGroup::make([
-                    \Filament\Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }
