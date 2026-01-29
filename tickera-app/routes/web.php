@@ -9,3 +9,5 @@ Route::get('/', [EventController::class, 'index'])->name('events.index');
 Route::get('/event/{id}', [EventController::class, 'show'])->name('events.show');
 Route::post('/order', [OrderController::class, 'store'])->name('order.store');
 Route::get('/order/{order}/download', [TicketController::class, 'downloadOrder'])->name('order.download');
+Route::post('/order', [OrderController::class, 'store'])->name('order.create');
+Route::get('/order/success/{order}', [OrderController::class, 'success'])->name('order.success');

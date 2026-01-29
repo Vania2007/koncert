@@ -8,6 +8,10 @@ class Hall extends Model
 {
     protected $guarded = [];
 
+    protected $casts = [
+        'schema_data' => 'array', 
+    ];
+
     public function seats()
     {
         return $this->hasMany(Seat::class);

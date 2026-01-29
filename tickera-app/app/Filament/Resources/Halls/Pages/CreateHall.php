@@ -12,25 +12,19 @@ class CreateHall extends CreateRecord
 
     protected function afterCreate(): void
     {
-        // Получаем состояние формы
-        $state = $this->form->getState();
+        $hall = $this->record; // Зал уже создан и schema_data сохранена в нем
 
-        if (!empty($state['seat_generators'])) {
-            $hall = $this->record;
+        // Проверяем, есть ли сохраненная схема
+        if (!empty($hall->schema_data)) {
             
-            foreach ($state['seat_generators'] as $block) {
+            $currentY = 50; 
+            
+            // 👇 Берем данные прямо из модели
+            foreach ($hall->schema_data as $block) {
                 $section = $block['section_name'];
                 $rowCount = (int) $block['rows'];
                 $seatsCount = (int) $block['seats_per_row'];
                 
-                // 👇 ВАЖНО: Берем координаты, которые мы задали мышкой в редакторе
-                // Если их нет (обычный ввод), будет 0
-                $baseX = (int) ($block['x'] ?? 0);
-                $baseY = (int) ($block['y'] ?? 0);
-                
-                // Шаг отрисовки (должен совпадать с фронтендом, например 30px)
-                $seatSize = 30; 
-
                 for ($r = 1; $r <= $rowCount; $r++) {
                     for ($s = 1; $s <= $seatsCount; $s++) {
                         Seat::create([
@@ -38,13 +32,12 @@ class CreateHall extends CreateRecord
                             'section' => $section,
                             'row' => $r,
                             'number' => $s,
-                            
-                            // 👇 Считаем позицию: База блока + (Номер места * Размер)
-                            'x' => $baseX + ($s * $seatSize), 
-                            'y' => $baseY + ($r * $seatSize),
+                            'x' => 50 + ($s * 35), 
+                            'y' => $currentY + ($r * 35),
                         ]);
                     }
                 }
+                $currentY += ($rowCount * 35) + 50;
             }
         }
     }

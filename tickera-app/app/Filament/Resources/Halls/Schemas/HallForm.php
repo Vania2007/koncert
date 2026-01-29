@@ -3,10 +3,8 @@
 namespace App\Filament\Resources\Halls\Schemas;
 
 use Filament\Schemas\Schema;
-// 👇 В v5 разметка (Section, Grid) лежит в Schemas
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-// 👇 А поля ввода (TextInput, Repeater) остались в Forms
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 
@@ -21,31 +19,27 @@ class HallForm
                 ->maxLength(255),
 
             Section::make('Конструктор мест')
-                ->description('Добавьте сектора, укажите количество рядов и мест')
                 ->schema([
-                    Repeater::make('seat_generators')
+                    // 👇 ИЗМЕНИЛИ ИМЯ НА schema_data И УБРАЛИ dehydrated(false)
+                    Repeater::make('schema_data') 
                         ->label('Сектора')
                         ->schema([
                             TextInput::make('section_name')
-                                ->label('Название сектора (Партер)')
+                                ->label('Название сектора')
                                 ->required(),
                             
                             Grid::make(2)->schema([
                                 TextInput::make('rows')
                                     ->label('Рядов')
                                     ->numeric()
-                                    ->required()
-                                    ->minValue(1),
+                                    ->required(),
                                 
                                 TextInput::make('seats_per_row')
                                     ->label('Мест в ряду')
                                     ->numeric()
-                                    ->required()
-                                    ->minValue(1),
+                                    ->required(),
                             ]),
                         ])
-                        // 👇 Важно: эти данные не идут напрямую в таблицу halls
-                        ->dehydrated(false) 
                 ]),
         ]);
     }
