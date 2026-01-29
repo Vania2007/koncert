@@ -3,25 +3,32 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Ticket; // Не забудьте этот импорт!
 use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
-    // Главная страница: список всех событий
     public function index()
     {
-        // Берем все события, сортируем по дате начала
-        $events = Event::orderBy('start_time', 'asc')->get();
-        
+        $events = Event::with('hall')->where('start_time', '>', now())->get();
         return view('events.index', compact('events'));
     }
 
-    // Страница конкретного события (где покупка билетов)
-    public function show($id)
+    public function show(Event $event)
     {
-        // Ищем событие по ID и сразу подгружаем типы билетов
-        $event = Event::with('ticketTypes')->findOrFail($id);
-        
-        return view('events.show', compact('event'));
+        // Подгружаем зал и места
+        $event->load(['hall.seats', 'ticketTypes']);
+
+        // Находим ID занятых мест для этого события
+        // (Ищем билеты на это событие, у которых прописан seat_id)
+        $occupiedSeatIds = Ticket::query()
+            ->whereHas('ticketType', function($query) use ($event) {
+                $query->where('event_id', $event->id);
+            })
+            ->whereNotNull('seat_id')
+            ->pluck('seat_id')
+            ->toArray();
+
+        return view('events.show', compact('event', 'occupiedSeatIds'));
     }
 }
