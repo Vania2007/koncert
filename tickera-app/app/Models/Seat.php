@@ -6,21 +6,28 @@ use Illuminate\Database\Eloquent\Model;
 
 class Seat extends Model
 {
+    // 👇 Самая важная строка. Без нее таблица seats будет пустой!
     protected $guarded = [];
 
     public function hall()
     {
         return $this->belongsTo(Hall::class);
     }
-    
+
     // Получить полное название места (Ряд 5, Место 10)
     public function getLabelAttribute()
     {
         $parts = [];
-        if ($this->section) $parts[] = $this->section;
-        if ($this->row) $parts[] = "Ряд {$this->row}";
+        if ($this->section) {
+            $parts[] = $this->section;
+        }
+
+        if ($this->row) {
+            $parts[] = "Ряд {$this->row}";
+        }
+
         $parts[] = "Место {$this->number}";
-        
+
         return implode(', ', $parts);
     }
 }

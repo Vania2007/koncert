@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             // Вот эти две строки критически важны:
-            $table->string('customer_email');
+            $table->string('customer_email')->nullable();
             $table->string('customer_name')->nullable();
 
             $table->decimal('total_amount', 10, 2);

@@ -7,16 +7,16 @@
     </div>
 
     <div class="flex flex-col items-center justify-center min-h-[60vh]">
-        
+
         <div class="mb-4 text-center">
             <h2 class="text-xl font-bold">Быстрый сканер</h2>
         </div>
 
         <div wire:ignore class="relative w-full max-w-md mx-auto">
             <div class="bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-gray-800 relative aspect-square">
-                
+
                 <video id="qr-video" class="w-full h-full object-cover"></video>
-                
+
                 <div class="absolute inset-0 border-[30px] border-black/30 pointer-events-none">
                     <div class="border-2 border-white/50 w-full h-full rounded-lg"></div>
                 </div>
@@ -43,7 +43,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            
+
             // Элементы
             const videoElem = document.getElementById('qr-video');
             const statusMsg = document.getElementById('status-msg');
@@ -51,7 +51,7 @@
             const spinner = document.getElementById('loading-spinner');
             const btnRetry = document.getElementById('btn-retry');
             const btnSwitch = document.getElementById('switch-cam');
-            
+
             // Оверлей
             const overlay = document.getElementById('scan-overlay');
             const overlayTitle = document.getElementById('overlay-title');
@@ -110,10 +110,10 @@
                 if (!scanner) {
                     scanner = new QrScanner(videoElem, result => {
                         if (isBlocked) return;
-                        
+
                         console.log('Scanned:', result);
                         isBlocked = true;
-                        
+
                         // Проверка билета
                         @this.checkTicket(result).catch(err => {
                             console.error(err);
@@ -123,7 +123,7 @@
 
                     }, {
                         // Опции для лучшей совместимости
-                        onDecodeError: error => {}, 
+                        onDecodeError: error => {},
                         highlightScanRegion: true,
                         highlightCodeOutline: true,
                     });
@@ -134,7 +134,7 @@
                     .then(() => {
                         // Успех! Скрываем экран загрузки
                         statusMsg.style.display = 'none';
-                        
+
                         // Проверяем наличие других камер
                         QrScanner.listCameras(true).then(cameras => {
                             if (cameras.length > 1) btnSwitch.classList.remove('hidden');
@@ -151,11 +151,33 @@
                             showError(err.toString());
                         }
                     });
+                    if (!scanner) {
+    scanner = new QrScanner(videoElem, result => {
+        if (isBlocked) return;
+
+        isBlocked = true;
+
+        // Передаем только текстовые данные (result.data или сам result)
+        const codeValue = (typeof result === 'object') ? result.data : result;
+
+        console.log('Scanned Code:', codeValue);
+
+        @this.checkTicket(codeValue).catch(err => {
+            console.error(err);
+            showOverlay('warning', 'ОШИБКА', 'Нет связи с сервером');
+            setTimeout(hideOverlay, 3000);
+        });
+
+    }, {
+        highlightScanRegion: true,
+        highlightCodeOutline: true,
+    });
+}
             }
 
             // --- КНОПКИ ---
             btnRetry.addEventListener('click', startScanner);
-            
+
             btnSwitch.addEventListener('click', () => {
                 QrScanner.listCameras(true).then(cameras => {
                     // Простая переключалка (циклическая)
@@ -176,7 +198,7 @@
             startScanner();
         });
     </script>
-    
+
     <style>
         video { transform: scaleX(-1); } /* Зеркало */
     </style>

@@ -12,14 +12,13 @@ class CreateHall extends CreateRecord
 
     protected function afterCreate(): void
     {
-        $hall = $this->record; // Зал уже создан и schema_data сохранена в нем
+        $hall = $this->record;
 
-        // Проверяем, есть ли сохраненная схема
         if (!empty($hall->schema_data)) {
             
-            $currentY = 50; 
+            // 👇 ИЗМЕНЕНИЕ ЗДЕСЬ: Тоже ставим 90 для новых залов.
+            $currentY = 90; 
             
-            // 👇 Берем данные прямо из модели
             foreach ($hall->schema_data as $block) {
                 $section = $block['section_name'];
                 $rowCount = (int) $block['rows'];

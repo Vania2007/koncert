@@ -6,13 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    protected $fillable = [
-        'customer_email',
-        'customer_name',
-        'total_amount',
-        'status',
-        'payment_id',
-    ];
+    // 👇 Разрешаем запись всех полей (включая customer_email)
+    protected $guarded = [];
 
     public function tickets()
     {

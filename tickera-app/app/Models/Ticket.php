@@ -6,18 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ticket extends Model
 {
+    // 👇 Мы убираем старый $fillable и оставляем только $guarded = [], 
+    // чтобы разрешить запись ЛЮБЫХ полей, которые есть в базе.
     protected $guarded = [];
 
     protected $casts = [
         'is_checked_in' => 'boolean',
         'checked_in_at' => 'datetime',
-    ];
-    protected $fillable = [
-        'order_id',
-        'ticket_type_id',
-        'unique_code',
-        'is_checked_in',
-        'checked_in_at',
     ];
 
     public function event()
@@ -34,6 +29,7 @@ class Ticket extends Model
     {
         return $this->belongsTo(Order::class);
     }
+    
     public function seat()
     {
         return $this->belongsTo(Seat::class);
