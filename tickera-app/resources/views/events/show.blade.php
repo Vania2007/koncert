@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .screen-curve { filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.1)); }
-        
+
         .seat {
             width: 28px;
             height: 28px;
@@ -20,7 +20,7 @@
             user-select: none;
             transition: transform 0.1s;
         }
-        
+
         /* Номера рядов (слева от ряда) */
         .row-label {
             position: absolute;
@@ -64,16 +64,16 @@
             </div>
         @endif
     </div>
-    
+
     @if($event->hall && $event->hall->seats->count() > 0)
         @php
             // 1. Вычисляем реальные размеры схемы, чтобы она "влезла"
             $maxX = $event->hall->seats->max('x');
             $maxY = $event->hall->seats->max('y');
-            
+
             // Добавляем отступы (padding), чтобы крайние места не обрезались
-            $canvasWidth = $maxX + 100; 
-            $canvasHeight = $maxY + 150; 
+            $canvasWidth = $maxX + 100;
+            $canvasHeight = $maxY + 150;
 
             // Центр сцены должен быть по центру холста
             $screenX = $canvasWidth / 2;
@@ -84,9 +84,9 @@
             <input type="hidden" name="event_id" value="{{ $event->id }}">
 
             <div class="flex-grow relative bg-[#18181b] overflow-hidden flex items-center justify-center" id="map-container">
-                
+
                 <div id="zoom-layer" class="origin-top transition-transform duration-200 ease-out" style="width: {{ $canvasWidth }}px; height: 93vh;">
-                    
+
                     <div class="absolute top-5 left-1/2 transform -translate-x-1/2 w-[600px] pointer-events-none">
                         <svg viewBox="0 0 800 60" fill="none" class="w-full screen-curve">
                             <path d="M50,50 Q400,-10 750,50" stroke="#333" stroke-width="6" stroke-linecap="round" />
@@ -113,7 +113,7 @@
                     @foreach($event->hall->seats as $seat)
                         @php
                             $isOccupied = in_array($seat->id, $occupiedSeatIds);
-                            
+
                             if ($isOccupied) {
                                 // Занято
                                 $colorClass = 'bg-gray-800 text-transparent border border-gray-700 cursor-not-allowed';
@@ -125,9 +125,16 @@
                                 };
                                 $colorClass .= ' cursor-pointer shadow-sm';
                             }
+                            $isMySeat = in_array($seat->id, $mySelectedSeats ?? []);
                         @endphp
-
-                        <label 
+                        <input type="checkbox"
+       name="seats[]"
+       value="{{ $seat->id }}"
+       class="hidden peer seat-checkbox"
+       data-seat-id="{{ $seat->id }}"
+       @checked($isMySeat)
+       onchange="handleSeatClick(this)">
+                        <label
                             class="absolute seat group {{ $colorClass }}"
                             style="left: {{ $seat->x }}px; top: {{ $seat->y }}px;"
                         >
@@ -135,7 +142,7 @@
                                 <input type="checkbox" name="seats[]" value="{{ $seat->id }}" class="hidden peer" onchange="updateCart()">
                                 <div class="absolute inset-0 border-2 border-white rounded-[5px] opacity-0 peer-checked:opacity-100 transition-opacity shadow-[0_0_10px_white]"></div>
                             @endif
-                            
+
                             <span class="z-10 text-[9px] opacity-50 group-hover:opacity-100">{{ $seat->number }}</span>
                         </label>
                     @endforeach
@@ -172,6 +179,53 @@
     @endif
 
     <script>
+        const eventId = {{ $event->id }};
+    const csrfToken = '{{ csrf_token() }}';
+
+    // Функция при клике на место
+    async function handleSeatClick(checkbox) {
+        // 1. Временно блокируем чекбокс, чтобы не кликали 100 раз
+        checkbox.disabled = true;
+        const label = checkbox.parentElement; // Родительский label
+
+        try {
+            // 2. Отправляем запрос
+            const response = await fetch("{{ route('seats.toggle_lock') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken
+                },
+                body: JSON.stringify({
+                    seat_id: checkbox.value,
+                    event_id: eventId
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                // Если ошибка (занято) — отменяем выбор
+                throw new Error(data.message || 'Ошибка бронирования');
+            }
+
+            // 3. Если успех — обновляем корзину
+            updateCart();
+
+            // Если заблокировали — можно добавить таймер (опционально)
+            if (data.status === 'locked') {
+                console.log('Место забронировано до: ' + data.expires_at);
+            }
+
+        } catch (error) {
+            alert("Упс! " + error.message);
+            // Возвращаем галочку назад, так как сервер отказал
+            checkbox.checked = !checkbox.checked;
+            updateCart(); // пересчитать сумму обратно
+        } finally {
+            checkbox.disabled = false;
+        }
+    }
         // === ЛОГИКА МАСШТАБИРОВАНИЯ (ZOOM) ===
         function fitMap() {
             const container = document.getElementById('map-container');
@@ -191,7 +245,7 @@
 
             // Считаем масштаб по ширине
             let scale = (containerWidth - padding * 2) / contentWidth;
-            
+
             // Если схема слишком высокая, проверяем масштаб по высоте
             // (опционально, если хотите, чтобы всегда влезала целиком)
             // const scaleH = (containerHeight - padding * 2) / contentHeight;
@@ -200,10 +254,10 @@
             // Ограничения: не увеличивать больше 100%
             if (scale > 1) scale = 1;
             // Не уменьшать слишком сильно (чтобы на мобилках не было микробов)
-            if (window.innerWidth < 768 && scale < 0.4) scale = 0.4; 
+            if (window.innerWidth < 768 && scale < 0.4) scale = 0.4;
 
             layer.style.transform = `scale(${scale})`;
-            
+
             // Центрируем, если контент меньше контейнера
             if (scale === 1) {
                  layer.style.margin = '0 auto';
@@ -219,7 +273,7 @@
         // Запускаем при загрузке и ресайзе
         window.addEventListener('load', fitMap);
         window.addEventListener('resize', fitMap);
-        
+
         // === ЛОГИКА КОРЗИНЫ ===
         const price = {{ $event->ticketTypes->first()->price ?? 0 }};
         const form = document.getElementById('main-form');
@@ -240,7 +294,7 @@
                 const number = label.querySelector('span').innerText;
                 // Ищем номер ряда (находим ближайший .row-label с такой же Y координатой - сложная логика,
                 // упростим: просто выведем "Место N")
-                
+
                 html += `
                     <div class="flex justify-between items-center bg-gray-800 p-2 rounded border border-gray-700">
                         <span class="text-white font-bold">Место ${number}</span>
@@ -269,6 +323,7 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
         });
+        window.addEventListener('load', updateCart);
 
     </script>
 </body>

@@ -1,206 +1,198 @@
 <x-filament-panels::page>
 
-    <div id="scan-overlay" class="hidden fixed inset-0 z-[9999] flex-col items-center justify-center text-center p-4 transition-all duration-300">
-        <div id="overlay-icon" class="text-9xl mb-8 drop-shadow-md"></div>
-        <h2 id="overlay-title" class="text-5xl md:text-7xl font-black mb-4 uppercase tracking-wider drop-shadow-sm"></h2>
-        <p id="overlay-body" class="text-2xl md:text-3xl font-bold opacity-90"></p>
+    {{-- 
+        ОВЕРЛЕЙ (ВСПЛЫВАЮЩЕЕ ОКНО) 
+        Используем inline-стили для гарантии перекрытия всего интерфейса.
+        Добавлен transition для плавности.
+    --}}
+    <div id="scan-overlay" 
+         style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2147483647; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+        
+        {{-- Иконка --}}
+        <div id="overlay-icon" class="text-[150px] mb-8 leading-none drop-shadow-lg animate-bounce"></div>
+
+        {{-- Заголовок --}}
+        <h2 id="overlay-title" class="text-6xl md:text-8xl font-black uppercase tracking-widest text-white drop-shadow-md mb-6" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.5);"></h2>
+
+        {{-- Текст --}}
+        <div class="bg-black/30 backdrop-blur-md rounded-xl p-6 border border-white/20">
+             <p id="overlay-body" class="text-3xl md:text-5xl font-bold text-white whitespace-pre-line leading-tight" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);"></p>
+        </div>
     </div>
 
-    <div class="flex flex-col items-center justify-center min-h-[60vh]">
+    {{-- ОСНОВНОЙ ЭКРАН СКАНЕРА --}}
+    <div class="flex flex-col items-center justify-center min-h-[70vh]">
 
-        <div class="mb-4 text-center">
-            <h2 class="text-xl font-bold">Быстрый сканер</h2>
+        <div class="mb-6 text-center">
+            <h2 class="text-3xl font-black uppercase text-gray-400 tracking-widest">Scan Point</h2>
+            <p class="text-gray-500 text-sm mt-2">Наведите камеру на QR-код</p>
         </div>
 
-        <div wire:ignore class="relative w-full max-w-md mx-auto">
-            <div class="bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-gray-800 relative aspect-square">
-
+        {{-- ВИДЕО --}}
+        <div wire:ignore class="relative w-full max-w-md aspect-square mx-auto">
+            <div class="w-full h-full bg-black rounded-[2rem] overflow-hidden shadow-2xl border-8 border-gray-800 relative">
+                
                 <video id="qr-video" class="w-full h-full object-cover"></video>
 
-                <div class="absolute inset-0 border-[30px] border-black/30 pointer-events-none">
-                    <div class="border-2 border-white/50 w-full h-full rounded-lg"></div>
+                {{-- Прицел --}}
+                <div class="absolute inset-0 border-[50px] border-black/40 pointer-events-none">
+                    <div class="w-full h-full border-4 border-white/40 rounded-xl relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-2 bg-red-500 shadow-[0_0_20px_red] animate-[scan_1.5s_infinite]"></div>
+                    </div>
                 </div>
 
-                <div id="status-msg" class="absolute inset-0 flex flex-col items-center justify-center text-white bg-black/80 p-4 text-center">
-                    <div id="loading-spinner" class="animate-spin rounded-full h-10 w-10 border-b-2 border-white mb-4"></div>
-                    <span id="status-text" class="text-sm font-mono">Запуск камеры...</span>
-                    <button id="btn-retry" class="hidden mt-4 px-4 py-2 bg-white text-black rounded font-bold text-xs">
-                        Попробовать снова
+                {{-- Сообщение о статусе камеры --}}
+                <div id="status-msg" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-10">
+                    <div id="loading-spinner" class="animate-spin rounded-full h-16 w-16 border-4 border-gray-600 border-t-white mb-6"></div>
+                    <span id="status-text" class="text-white font-bold text-lg">Запуск камеры...</span>
+                    <button id="btn-retry" class="hidden mt-6 px-6 py-3 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition">
+                        Перезапуск
                     </button>
                 </div>
             </div>
         </div>
-
-        <div class="mt-6">
-            <button id="switch-cam" class="hidden px-4 py-2 bg-gray-200 rounded-lg text-sm hover:bg-gray-300">
-                🔄 Сменить камеру
-            </button>
-        </div>
-
     </div>
 
+    {{-- Библиотека --}}
     <script src="https://unpkg.com/qr-scanner@1.4.2/qr-scanner.legacy.min.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-
-            // Элементы
+            
             const videoElem = document.getElementById('qr-video');
             const statusMsg = document.getElementById('status-msg');
             const statusText = document.getElementById('status-text');
             const spinner = document.getElementById('loading-spinner');
             const btnRetry = document.getElementById('btn-retry');
-            const btnSwitch = document.getElementById('switch-cam');
 
-            // Оверлей
+            // Элементы оверлея
             const overlay = document.getElementById('scan-overlay');
-            const overlayTitle = document.getElementById('overlay-title');
-            const overlayBody = document.getElementById('overlay-body');
-            const overlayIcon = document.getElementById('overlay-icon');
+            const oTitle = document.getElementById('overlay-title');
+            const oBody = document.getElementById('overlay-body');
+            const oIcon = document.getElementById('overlay-icon');
 
             // Звуки
-            const audioSuccess = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-            const audioError = new Audio('https://assets.mixkit.co/active_storage/sfx/257/257-preview.mp3');
+            const audioOk = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
+            const audioErr = new Audio('https://assets.mixkit.co/active_storage/sfx/940/940-preview.mp3');
+            const audioWarn = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
 
             let scanner = null;
             let isBlocked = false;
 
-            // --- ФУНКЦИИ ИНТЕРФЕЙСА ---
-            function showError(msg) {
+            // --- ПОКАЗ ОКНА НА ВЕСЬ ЭКРАН ---
+            function showFullVerdict(status, title, body, icon) {
+                
+                // 👇 ДОБАВЛЕНО: ВИБРАЦИЯ (Haptic Feedback)
+                if (navigator.vibrate) {
+                    if (status === 'success') {
+                        navigator.vibrate(200); // Короткая, уверенная
+                    } else {
+                        navigator.vibrate([100, 50, 100, 50, 100]); // Длинная, прерывистая (ошибка)
+                    }
+                }
+
+                // 1. Показываем блок
+                overlay.style.display = 'flex';
+                
+                // 2. Красим фон через style
+                if (status === 'success') {
+                    overlay.style.backgroundColor = 'rgba(22, 163, 74, 1)'; // Зеленый
+                    oIcon.innerText = '✅';
+                    audioOk.currentTime = 0;
+                    audioOk.play().catch(()=>{});
+                } 
+                else if (status === 'warning') {
+                    overlay.style.backgroundColor = 'rgba(234, 179, 8, 1)'; // Желтый
+                    oIcon.innerText = '⚠️';
+                    audioWarn.currentTime = 0;
+                    audioWarn.play().catch(()=>{});
+                } 
+                else {
+                    overlay.style.backgroundColor = 'rgba(220, 38, 38, 1)'; // Красный
+                    oIcon.innerText = '⛔';
+                    audioErr.currentTime = 0;
+                    audioErr.play().catch(()=>{});
+                }
+
+                // 3. Заполняем текст
+                oTitle.innerText = title;
+                oBody.innerText = body;
+                if(icon) oIcon.innerText = icon;
+
+                // 4. Скрываем через 2.5 сек
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    setTimeout(() => { isBlocked = false; }, 500);
+                }, 2500);
+            }
+
+            function showCamError(msg) {
                 spinner.style.display = 'none';
-                statusText.innerHTML = `<span class="text-red-400">ОШИБКА:</span><br>${msg}`;
+                statusText.innerHTML = `<span class="text-red-500 font-bold">ОШИБКА</span><br><span class="text-xs text-gray-300">${msg}</span>`;
                 btnRetry.classList.remove('hidden');
             }
 
-            function showOverlay(type, title, message) {
-                overlay.classList.remove('hidden');
-                overlay.className = 'fixed inset-0 z-[9999] flex flex-col items-center justify-center text-center p-4 transition-all duration-300 backdrop-blur-md';
-
-                if (type === 'success') {
-                    overlay.classList.add('bg-green-600/95', 'text-white');
-                    overlayIcon.innerHTML = '✅';
-                    audioSuccess.play().catch(()=>{});
-                } else if (type === 'error') {
-                    overlay.classList.add('bg-red-600/95', 'text-white');
-                    overlayIcon.innerHTML = '⛔';
-                    audioError.play().catch(()=>{});
-                } else {
-                    overlay.classList.add('bg-yellow-500/95', 'text-black');
-                    overlayIcon.innerHTML = '⚠️';
-                    audioError.play().catch(()=>{});
-                }
-                overlayTitle.innerText = title;
-                overlayBody.innerText = message;
-            }
-
-            function hideOverlay() {
-                overlay.classList.add('hidden');
-                isBlocked = false;
-            }
-
-            // --- ИНИЦИАЛИЗАЦИЯ СКАНЕРА ---
+            // --- СТАРТ СКАНЕРА ---
             function startScanner() {
-                // Сброс UI
                 statusText.innerText = 'Запуск камеры...';
                 spinner.style.display = 'block';
                 btnRetry.classList.add('hidden');
-                statusMsg.style.display = 'flex'; // Показываем экран загрузки
+                statusMsg.style.display = 'flex';
 
-                // Создаем сканер
-                if (!scanner) {
-                    scanner = new QrScanner(videoElem, result => {
-                        if (isBlocked) return;
-
-                        console.log('Scanned:', result);
-                        isBlocked = true;
-
-                        // Проверка билета
-                        @this.checkTicket(result).catch(err => {
-                            console.error(err);
-                            showOverlay('warning', 'ОШИБКА', 'Нет связи с сервером');
-                            setTimeout(hideOverlay, 3000);
-                        });
-
-                    }, {
-                        // Опции для лучшей совместимости
-                        onDecodeError: error => {},
-                        highlightScanRegion: true,
-                        highlightCodeOutline: true,
-                    });
+                if (scanner) {
+                    scanner.destroy();
+                    scanner = null;
                 }
 
-                // Запускаем
-                scanner.start()
-                    .then(() => {
-                        // Успех! Скрываем экран загрузки
-                        statusMsg.style.display = 'none';
+                scanner = new QrScanner(videoElem, result => {
+                    if (isBlocked) return;
 
-                        // Проверяем наличие других камер
-                        QrScanner.listCameras(true).then(cameras => {
-                            if (cameras.length > 1) btnSwitch.classList.remove('hidden');
-                        });
-                    })
-                    .catch(err => {
-                        console.error("Camera start error:", err);
-                        // Выводим понятную ошибку на экран
-                        if (err.toString().includes('Permission denied')) {
-                            showError('Доступ к камере запрещен.<br>Разрешите доступ в настройках браузера.');
-                        } else if (err.toString().includes('Secure Context')) {
-                            showError('Камера работает только по HTTPS или на localhost!<br>На телефоне нужен https://.');
-                        } else {
-                            showError(err.toString());
-                        }
+                    let code = (typeof result === 'object' && result.data) ? result.data : result;
+                    if (!code) return;
+
+                    console.log('Scan:', code);
+                    isBlocked = true;
+
+                    // Вызов PHP
+                    @this.checkTicket(code).catch(err => {
+                        console.error(err);
+                        showFullVerdict('error', 'СБОЙ', 'Ошибка связи с сервером', '📡');
                     });
-                    if (!scanner) {
-    scanner = new QrScanner(videoElem, result => {
-        if (isBlocked) return;
 
-        isBlocked = true;
+                }, {
+                    highlightScanRegion: true,
+                    highlightCodeOutline: true,
+                    preferredCamera: 'environment',
+                    maxScansPerSecond: 5,
+                });
 
-        // Передаем только текстовые данные (result.data или сам result)
-        const codeValue = (typeof result === 'object') ? result.data : result;
-
-        console.log('Scanned Code:', codeValue);
-
-        @this.checkTicket(codeValue).catch(err => {
-            console.error(err);
-            showOverlay('warning', 'ОШИБКА', 'Нет связи с сервером');
-            setTimeout(hideOverlay, 3000);
-        });
-
-    }, {
-        highlightScanRegion: true,
-        highlightCodeOutline: true,
-    });
-}
+                scanner.start().then(() => {
+                    statusMsg.style.display = 'none';
+                }).catch(err => {
+                    console.error(err);
+                    showCamError(err);
+                });
             }
 
-            // --- КНОПКИ ---
             btnRetry.addEventListener('click', startScanner);
 
-            btnSwitch.addEventListener('click', () => {
-                QrScanner.listCameras(true).then(cameras => {
-                    // Простая переключалка (циклическая)
-                    // Для реального продакшена лучше делать выпадающий список
-                    // но пока просто пересоздадим сканер с новой камерой.
-                    alert('Функция переключения пока упрощена. Попробуйте обновить страницу.');
-                });
-            });
-
-            // --- СЛУШАЕМ PHP ---
+            // Слушаем событие от Livewire
             window.addEventListener('scan-finished', event => {
                 const data = event.detail;
-                showOverlay(data.status, data.title, data.body);
-                setTimeout(hideOverlay, 2500);
+                const payload = data.status ? data : (data[0] || {});
+                showFullVerdict(payload.status, payload.title, payload.body, payload.icon);
             });
 
-            // Старт при загрузке
             startScanner();
         });
     </script>
 
     <style>
-        video { transform: scaleX(-1); } /* Зеркало */
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
     </style>
 
 </x-filament-panels::page>
