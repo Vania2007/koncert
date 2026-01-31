@@ -38,7 +38,7 @@
 
                     <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                         <a href="{{ route('events.show', $event) }}" class="transform translate-y-4 group-hover:translate-y-0 transition duration-300 px-6 py-3 bg-white text-black font-bold rounded-full hover:bg-indigo-500 hover:text-white">
-                            Купить билет
+                            Подробнее
                         </a>
                     </div>
                 </div>
@@ -63,7 +63,7 @@
 
                     <div class="mt-auto pt-4 border-t border-gray-800">
                         <a href="{{ route('events.show', $event) }}" class="block w-full py-3 rounded-xl border border-gray-700 hover:border-indigo-500 hover:bg-indigo-600/10 text-center text-sm font-bold text-gray-300 hover:text-white transition group-active:scale-95">
-                            Выбрать билет
+                            Подробнее
                         </a>
                     </div>
                 </div>

@@ -8,10 +8,10 @@ use App\Http\Controllers\SeatLockController;
 
 Route::get('/', [EventController::class, 'index'])->name('events.index');
 
-// Страница инфо о событии
+// 1. Страница описания (Лендинг)
 Route::get('/event/{event}', [EventController::class, 'show'])->name('events.show');
 
-// Страница выбора билетов (Схема) - НОВЫЙ РОУТ
+// 2. Страница выбора мест (Схема)
 Route::get('/event/{event}/tickets', [EventController::class, 'selectSeats'])->name('events.tickets');
 
 Route::post('/order', [OrderController::class, 'store'])->name('order.create');
