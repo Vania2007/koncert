@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class Event extends Model
 {
     protected $fillable = [
-        'title',
-        'description',
-        'location',
-        'start_time',
-        'end_time',
-        'hall_id', // <--- ВАЖНО: Добавили поле для сохранения зала
+        'title', 
+        'image', 
+        'description', 
+        'start_time', 
+        'end_time', 
+        'location', 
+        'city', 
+        'hall_id'
     ];
 
     // 👇 Магия: автоматическое удаление зависимых данных

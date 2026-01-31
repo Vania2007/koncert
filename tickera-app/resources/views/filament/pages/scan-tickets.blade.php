@@ -1,59 +1,74 @@
 <x-filament-panels::page>
 
-    {{-- 
-        ОВЕРЛЕЙ (ВСПЛЫВАЮЩЕЕ ОКНО) 
-        Используем inline-стили для гарантии перекрытия всего интерфейса.
-        Добавлен transition для плавности.
-    --}}
+    {{-- ОВЕРЛЕЙ (ВЕРДИКТ) --}}
     <div id="scan-overlay" 
-         style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 2147483647; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+         style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2147483647; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
         
-        {{-- Иконка --}}
-        <div id="overlay-icon" class="text-[150px] mb-8 leading-none drop-shadow-lg animate-bounce"></div>
+        <div id="overlay-icon" class="text-[100px] md:text-[150px] mb-6 leading-none drop-shadow-lg animate-bounce"></div>
 
-        {{-- Заголовок --}}
-        <h2 id="overlay-title" class="text-6xl md:text-8xl font-black uppercase tracking-widest text-white drop-shadow-md mb-6" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.5);"></h2>
+        <h2 id="overlay-title" class="text-5xl md:text-8xl font-black uppercase tracking-widest text-white drop-shadow-md mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.5);"></h2>
 
-        {{-- Текст --}}
-        <div class="bg-black/30 backdrop-blur-md rounded-xl p-6 border border-white/20">
-             <p id="overlay-body" class="text-3xl md:text-5xl font-bold text-white whitespace-pre-line leading-tight" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);"></p>
+        <div class="bg-black/30 backdrop-blur-md rounded-xl p-6 border border-white/20 max-w-sm w-full mx-auto">
+             <p id="overlay-body" class="text-xl md:text-4xl font-bold text-white whitespace-pre-line leading-tight" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);"></p>
         </div>
     </div>
 
-    {{-- ОСНОВНОЙ ЭКРАН СКАНЕРА --}}
-    <div class="flex flex-col items-center justify-center min-h-[70vh]">
+    {{-- ОСНОВНОЙ ЭКРАН --}}
+    <div class="flex flex-col items-center min-h-[85vh] py-2">
 
-        <div class="mb-6 text-center">
-            <h2 class="text-3xl font-black uppercase text-gray-400 tracking-widest">Scan Point</h2>
-            <p class="text-gray-500 text-sm mt-2">Наведите камеру на QR-код</p>
+        <div class="mb-4 text-center shrink-0">
+            <h2 class="text-xl font-black uppercase text-gray-400 tracking-widest">Scan Point</h2>
         </div>
 
-        {{-- ВИДЕО --}}
-        <div wire:ignore class="relative w-full max-w-md aspect-square mx-auto">
-            <div class="w-full h-full bg-black rounded-[2rem] overflow-hidden shadow-2xl border-8 border-gray-800 relative">
+        {{-- 
+            ГЛАВНЫЙ КОНТЕЙНЕР
+            Mobile: h-[70vh] w-full (Высокий портретный режим)
+            Desktop: h-[500px] w-[500px] (Квадрат)
+        --}}
+        <div wire:ignore class="relative w-full max-w-[350px] md:max-w-[500px] h-[70vh] md:h-[500px] mx-auto">
+            
+            {{-- Черная подложка и рамка --}}
+            <div class="w-full h-full bg-black rounded-[30px] overflow-hidden shadow-2xl border-4 border-gray-800 relative flex flex-col justify-center">
                 
-                <video id="qr-video" class="w-full h-full object-cover"></video>
+                {{-- 
+                    ВИДЕО
+                    style="... !important" - критически важно, чтобы перебить стили библиотеки
+                --}}
+                <video id="qr-video" 
+                       playsinline muted 
+                       style="width: 100% !important; height: 100% !important; object-fit: cover !important; display: block;">
+                </video>
 
-                {{-- Прицел --}}
-                <div class="absolute inset-0 border-[50px] border-black/40 pointer-events-none">
-                    <div class="w-full h-full border-4 border-white/40 rounded-xl relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-2 bg-red-500 shadow-[0_0_20px_red] animate-[scan_1.5s_infinite]"></div>
+                {{-- ПРИЦЕЛ (Визуальный) --}}
+                {{-- На мобильном делаем его явно вертикальным прямоугольником --}}
+                <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div class="absolute inset-0 border-[40px] border-black/50"></div>
+                    
+                    <div class="relative w-full h-full border-2 border-white/50 rounded-lg overflow-hidden box-border z-10">
+                        {{-- Уголки --}}
+                        <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-lg"></div>
+                        <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-lg"></div>
+                        <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-lg"></div>
+                        <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-lg"></div>
+
+                        {{-- Лазер --}}
+                        <div class="absolute top-0 left-0 w-full h-0.5 bg-red-500 shadow-[0_0_15px_red] animate-[scan_2s_infinite]"></div>
                     </div>
                 </div>
 
-                {{-- Сообщение о статусе камеры --}}
-                <div id="status-msg" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-10">
-                    <div id="loading-spinner" class="animate-spin rounded-full h-16 w-16 border-4 border-gray-600 border-t-white mb-6"></div>
-                    <span id="status-text" class="text-white font-bold text-lg">Запуск камеры...</span>
-                    <button id="btn-retry" class="hidden mt-6 px-6 py-3 bg-white text-black rounded-full font-bold hover:bg-gray-200 transition">
-                        Перезапуск
+                {{-- СТАТУС / ЗАГРУЗКА --}}
+                <div id="status-msg" class="absolute inset-0 flex flex-col items-center justify-center bg-black/95 z-20">
+                    <div id="loading-spinner" class="animate-spin rounded-full h-12 w-12 border-4 border-gray-600 border-t-indigo-500 mb-4"></div>
+                    <span id="status-text" class="text-white font-bold text-sm tracking-wider uppercase">Запуск камеры...</span>
+                    <button id="btn-retry" class="hidden mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold transition text-xs uppercase shadow-lg shadow-indigo-500/30">
+                        Повторить
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Библиотека --}}
+    {{-- Подключаем библиотеку --}}
     <script src="https://unpkg.com/qr-scanner@1.4.2/qr-scanner.legacy.min.js"></script>
 
     <script>
@@ -65,13 +80,11 @@
             const spinner = document.getElementById('loading-spinner');
             const btnRetry = document.getElementById('btn-retry');
 
-            // Элементы оверлея
             const overlay = document.getElementById('scan-overlay');
             const oTitle = document.getElementById('overlay-title');
             const oBody = document.getElementById('overlay-body');
             const oIcon = document.getElementById('overlay-icon');
 
-            // Звуки
             const audioOk = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3');
             const audioErr = new Audio('https://assets.mixkit.co/active_storage/sfx/940/940-preview.mp3');
             const audioWarn = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -79,47 +92,35 @@
             let scanner = null;
             let isBlocked = false;
 
-            // --- ПОКАЗ ОКНА НА ВЕСЬ ЭКРАН ---
+            // === ФУНКЦИИ ИНТЕРФЕЙСА ===
             function showFullVerdict(status, title, body, icon) {
-                
-                // 👇 ДОБАВЛЕНО: ВИБРАЦИЯ (Haptic Feedback)
                 if (navigator.vibrate) {
-                    if (status === 'success') {
-                        navigator.vibrate(200); // Короткая, уверенная
-                    } else {
-                        navigator.vibrate([100, 50, 100, 50, 100]); // Длинная, прерывистая (ошибка)
-                    }
+                    if (status === 'success') navigator.vibrate(200);
+                    else navigator.vibrate([100, 50, 100, 50, 100]);
                 }
 
-                // 1. Показываем блок
                 overlay.style.display = 'flex';
                 
-                // 2. Красим фон через style
                 if (status === 'success') {
                     overlay.style.backgroundColor = 'rgba(22, 163, 74, 1)'; // Зеленый
                     oIcon.innerText = '✅';
-                    audioOk.currentTime = 0;
-                    audioOk.play().catch(()=>{});
+                    audioOk.currentTime = 0; audioOk.play().catch(()=>{});
                 } 
                 else if (status === 'warning') {
                     overlay.style.backgroundColor = 'rgba(234, 179, 8, 1)'; // Желтый
                     oIcon.innerText = '⚠️';
-                    audioWarn.currentTime = 0;
-                    audioWarn.play().catch(()=>{});
+                    audioWarn.currentTime = 0; audioWarn.play().catch(()=>{});
                 } 
                 else {
                     overlay.style.backgroundColor = 'rgba(220, 38, 38, 1)'; // Красный
                     oIcon.innerText = '⛔';
-                    audioErr.currentTime = 0;
-                    audioErr.play().catch(()=>{});
+                    audioErr.currentTime = 0; audioErr.play().catch(()=>{});
                 }
 
-                // 3. Заполняем текст
                 oTitle.innerText = title;
                 oBody.innerText = body;
                 if(icon) oIcon.innerText = icon;
 
-                // 4. Скрываем через 2.5 сек
                 setTimeout(() => {
                     overlay.style.display = 'none';
                     setTimeout(() => { isBlocked = false; }, 500);
@@ -128,21 +129,18 @@
 
             function showCamError(msg) {
                 spinner.style.display = 'none';
-                statusText.innerHTML = `<span class="text-red-500 font-bold">ОШИБКА</span><br><span class="text-xs text-gray-300">${msg}</span>`;
+                statusText.innerHTML = `<span class="text-red-500 font-bold">ОШИБКА</span><br><span class="text-[10px] text-gray-400 normal-case">${msg}</span>`;
                 btnRetry.classList.remove('hidden');
             }
 
-            // --- СТАРТ СКАНЕРА ---
+            // === СТАРТ СКАНЕРА ===
             function startScanner() {
-                statusText.innerText = 'Запуск камеры...';
+                statusText.innerText = 'ЗАПУСК...';
                 spinner.style.display = 'block';
                 btnRetry.classList.add('hidden');
                 statusMsg.style.display = 'flex';
 
-                if (scanner) {
-                    scanner.destroy();
-                    scanner = null;
-                }
+                if (scanner) { scanner.destroy(); scanner = null; }
 
                 scanner = new QrScanner(videoElem, result => {
                     if (isBlocked) return;
@@ -153,10 +151,9 @@
                     console.log('Scan:', code);
                     isBlocked = true;
 
-                    // Вызов PHP
                     @this.checkTicket(code).catch(err => {
                         console.error(err);
-                        showFullVerdict('error', 'СБОЙ', 'Ошибка связи с сервером', '📡');
+                        showFullVerdict('error', 'СБОЙ', 'Ошибка сервера', '📡');
                     });
 
                 }, {
@@ -164,6 +161,20 @@
                     highlightCodeOutline: true,
                     preferredCamera: 'environment',
                     maxScansPerSecond: 5,
+                    // 👇 ВАЖНО: Принудительно задаем вертикальную область сканирования
+                    calculateScanRegion: (video) => {
+                        const w = video.videoWidth;
+                        const h = video.videoHeight;
+                        // Сканируем центральную часть (по сути весь экран, если обрезан CSS)
+                        // Делаем регион 70% от меньшей стороны, но центрируем
+                        const size = Math.min(w, h) * 0.8;
+                        return {
+                            x: Math.round((w - size) / 2),
+                            y: Math.round((h - size) / 2),
+                            width: size,
+                            height: size
+                        };
+                    }
                 });
 
                 scanner.start().then(() => {
@@ -176,7 +187,6 @@
 
             btnRetry.addEventListener('click', startScanner);
 
-            // Слушаем событие от Livewire
             window.addEventListener('scan-finished', event => {
                 const data = event.detail;
                 const payload = data.status ? data : (data[0] || {});

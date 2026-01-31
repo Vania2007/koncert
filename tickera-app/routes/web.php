@@ -8,10 +8,13 @@ use App\Http\Controllers\SeatLockController;
 
 Route::get('/', [EventController::class, 'index'])->name('events.index');
 
+// Страница инфо о событии
 Route::get('/event/{event}', [EventController::class, 'show'])->name('events.show');
+
+// Страница выбора билетов (Схема) - НОВЫЙ РОУТ
+Route::get('/event/{event}/tickets', [EventController::class, 'selectSeats'])->name('events.tickets');
 
 Route::post('/order', [OrderController::class, 'store'])->name('order.create');
 Route::get('/order/success/{order}', [OrderController::class, 'success'])->name('order.success');
 Route::get('/order/{order}/download', [TicketController::class, 'downloadOrder'])->name('order.download');
-
 Route::post('/seats/toggle-lock', [SeatLockController::class, 'toggle'])->name('seats.toggle_lock');

@@ -12,7 +12,7 @@
         <div class="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
         </div>
-        
+
         <h1 class="text-2xl font-bold mb-2">Билеты оплачены!</h1>
         <p class="text-gray-400 mb-6">Номер заказа: #{{ $order->id }}</p>
 
@@ -30,7 +30,7 @@
         <div class="space-y-3">
             <a href="{{ route('order.download', $order) }}" class="flex items-center justify-center gap-2 w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition shadow-lg shadow-indigo-500/20">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                <span>Скачать билеты (PDF/ZIP)</span>
+                <span>Скачать билеты (PDF)</span>
             </a>
 
             <a href="{{ route('events.index') }}" class="block w-full py-3 bg-transparent border border-gray-700 text-gray-400 hover:text-white hover:border-white font-medium rounded-xl transition">

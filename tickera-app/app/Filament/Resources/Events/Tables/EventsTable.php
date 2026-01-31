@@ -4,6 +4,11 @@ namespace App\Filament\Resources\Events\Tables;
 
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Actions\EditAction;     // <--- ВАЖНО: Добавлен импорт
+use Filament\Tables\Actions\DeleteAction;   // <--- ВАЖНО: Добавлен импорт
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
 
 class EventsTable
 {
@@ -11,26 +16,44 @@ class EventsTable
     {
         return $table
             ->columns([
+                ImageColumn::make('image')
+                    ->label('Постер')
+                    ->height(80)
+                    ->circular(false),
+
                 TextColumn::make('title')
                     ->label('Название')
-                    ->searchable(),
-                    
+                    ->searchable()
+                    ->weight('bold')
+                    ->sortable(),
+
+                TextColumn::make('city')
+                    ->label('Город')
+                    ->badge()
+                    ->color('info')
+                    ->sortable(),
+
+                TextColumn::make('hall.name') // Показываем зал
+                    ->label('Зал')
+                    ->sortable(),
+
                 TextColumn::make('start_time')
-                    ->label('Дата начала')
+                    ->label('Начало')
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
-                    
-                TextColumn::make('location')
-                    ->label('Место'),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                // Пока пусто, проверяем работу таблицы
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                // Пока пусто
-            ]);
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('start_time', 'asc');
     }
 }
