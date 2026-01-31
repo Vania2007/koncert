@@ -3,11 +3,11 @@
 namespace App\Filament\Resources\Events\Schemas;
 
 use Filament\Schemas\Schema;
-// 👇 Импорты полей ввода (Forms)
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Select; // <--- Добавили Select
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\FileUpload; 
 
 class EventForm
 {
@@ -15,15 +15,21 @@ class EventForm
     {
         return $schema
             ->components([
+                FileUpload::make('image')
+                    ->label('Изображение')
+                    ->image()
+                    ->disk('public') 
+                    ->directory('events')
+                    ->columnSpanFull(),
+
                 TextInput::make('title')
                     ->label('Название события')
                     ->required()
                     ->maxLength(255),
                     
-                // 👇 Добавляем выбор зала
                 Select::make('hall_id')
                     ->label('Выберите зал')
-                    ->relationship('hall', 'name') // Связь с моделью Hall, показываем поле name
+                    ->relationship('hall', 'name')
                     ->required()
                     ->searchable()
                     ->preload(),

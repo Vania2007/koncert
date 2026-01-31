@@ -72,7 +72,7 @@
                         </div>
                         
                         <a href="{{ route('events.tickets', $event) }}" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-lg shadow-lg shadow-indigo-500/30 transition transform hover:scale-105">
-                            Выбрать место на схеме
+                            Выбрать место
                         </a>
                     </div>
                 </div>
